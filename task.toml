@@ -6,13 +6,13 @@ difficulty = "hard"
 category = "security"
 subcategories = [
     "api_integration",
-    "db_interaction",
+    "db_interaction"
 ]
 number_of_milestones = 0
 codebase_size = "small"
 languages = [
     "javascript",
-    "sql",
+    "sql"
 ]
 tags = [
     "openssl",
@@ -21,7 +21,7 @@ tags = [
     "express",
     "duckdb",
     "reconciliation",
-    "idempotency",
+    "idempotency"
 ]
 
 [environment]

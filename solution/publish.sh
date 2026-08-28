@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 mkdir -p /app/publisher
-cp /solution/release-publisher.mjs /app/publisher/release-publisher.mjs
+cp "${SCRIPT_DIR}/release-publisher.mjs" /app/publisher/release-publisher.mjs
 
 cd /app/distribution-gateway
 node server.js >/tmp/gateway.log 2>&1 &

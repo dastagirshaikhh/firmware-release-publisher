@@ -38,6 +38,7 @@ The current signing-key information is available from `GET http://127.0.0.1:7070
 ## Distribution Gateway
 
 The gateway runs locally at `http://127.0.0.1:7070`.
+The gateway's base URL is `http://127.0.0.1:7070` by default. If the GATEWAY_URL environment variable is set, the publisher must use it instead.
 `GET http://127.0.0.1:7070/v1/signing-key/current` returns the current `key_id`, algorithm, certificate reference and status.
 `POST http://127.0.0.1:7070/v1/publications` accepts a request containing `descriptor`, `signature` and `request_token`.
 A successful publication response contains `publication_id`, `request_token` and `status` set to `PUBLISHED`.

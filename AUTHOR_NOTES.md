@@ -14,7 +14,7 @@ I built a few intentional traps into the data and the environment. The manifest 
 
 ## Grader Design
 
-The verifier is built to recompute the expected answers instead of just trusting hardcoded values. The first test checks that the standard output matches the expected golden file with the receipt hashes masked out. The second and third tests verify that DuckDB persistence works, tokens are unique and rerunning the script does not alter the database row count or output. The fourth test dynamically calculates the expected publishable bundle set from the manifest and compares it with the bundle IDs persisted by the publisher, checking that duplicate and withdrawal handling produce the expected publishable set. The final test explicitly signs a payload with the revoked key and hits the gateway to prove the untrusted signature trap is actively enforced.
+The verifier dynamically checks the task instead of relying only on hardcoded answers. It verifies that the manifest and expected report remain unchanged, that the provided gateway implementation remains unchanged, that the publisher output matches the golden format, that the actual HTTP publication requests contain the correctly reconciled and canonical descriptors and deterministic request tokens, that the gateway responses are successfully persisted in DuckDB, that the reported key ID matches the gateway's current signing-key response, that rerunning the publisher creates no additional publication requests while producing identical output, that the persisted bundle set matches the SQL reconciliation and that a signature made with the revoked key is rejected by the gateway.
 
 ## Verification
 
@@ -22,8 +22,20 @@ The submission handbook requires us to prove the task is both unsolved initially
 
 ### Proof A (Empty Solution)
 
-When running the tests against an empty environment where the publisher script does not exist, the verifier correctly fails. The golden output test catches the missing file and the subsequent logic tests fail because there is no DuckDB database created. The only test that passes is the revoked key trap test since that one is an independent API check. This gives an actual result of four failed tests, one passed test and a final reward of zero.
+The empty-environment proof collected seven tests. Four tests failed because the publisher and runtime DuckDB state were absent, while the input-integrity, gateway-integrity and revoked-key tests passed.
+
+Reward output:
+
+```text
+0
+```
 
 ### Proof B (Reference Solution)
 
-When injecting the reference solution into the environment and running the verifier again, all five verifier tests passed and the final reward was 1, demonstrating that the reference solution satisfies the verifier. This proves the task is solvable and the grader is accurate.
+The reference solution proof collected seven tests and all seven passed. The publisher reconciled the manifest, signed with the current signing key, published through the gateway, persisted publication state and satisfied the verifier.
+
+Reward output:
+
+```text
+1
+```
