@@ -31,7 +31,7 @@ Manifest data should be reconciled using SQL before publishing. If multiple mani
 
 ## Signing
 
-For each publishable bundle, generate a signed descriptor. Each signed descriptor must contain exactly the fields `artifact_count`, `bundle_id` and `total_bytes`. The descriptor must be canonical JSON with UTF-8 encoding, lexicographically sorted keys and no unnecessary whitespace. The exact bytes signed must be the exact same bytes submitted to the gateway. The gateway expects the release descriptor to be signed using OpenSSL CMS. The publisher must use the currently active signing key and certificate indicated by the gateway. The revoked signing key must not be used.
+For each publishable bundle, generate a signed descriptor. Each signed descriptor must contain exactly the fields `artifact_count`, `bundle_id` and `total_bytes`. The descriptor must be canonical JSON with UTF-8 encoding, lexicographically sorted keys and no unnecessary whitespace. The exact bytes signed must be the exact same bytes submitted to the gateway. The `descriptor` field of the publication request must be submitted as the literal canonical JSON string itself (not as a nested JSON object) so the submitted bytes are unambiguous. The gateway expects the release descriptor to be signed using OpenSSL CMS. The publisher must use the currently active signing key and certificate indicated by the gateway. The revoked signing key must not be used.
 
 The current signing-key information is available from `GET http://127.0.0.1:7070/v1/signing-key/current`
 
@@ -43,7 +43,7 @@ The gateway's base URL is `http://127.0.0.1:7070` by default. If the GATEWAY_URL
 `POST http://127.0.0.1:7070/v1/publications` accepts a request containing `descriptor`, `signature` and `request_token`.
 A successful publication response contains `publication_id`, `request_token` and `status` set to `PUBLISHED`.
 
-Interact with the distribution gateway only through its documented HTTP API. Do not read or write the gateway's private internal storage. Do not modify the provided distribution gateway or its implementation.
+Interact with the distribution gateway only through its documented HTTP API. Do not read or write the gateway's private internal storage. Do not modify the provided distribution gateway or its implementation. Do not modify `/app/fixtures/build_manifest.csv` or `/app/reports/publications.expected.txt`; the publisher must derive all output from these files as provided.
 
 ## Persistence and Idempotency
 

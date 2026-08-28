@@ -18,24 +18,97 @@ The verifier dynamically checks the task instead of relying only on hardcoded an
 
 ## Verification
 
-The submission handbook requires us to prove the task is both unsolved initially and solvable with the reference code.
+The submission handbook requires us to prove the task is both unsolved initially and solvable with the reference code. Both proofs below were run in a freshly built container (`docker build -t task-img .` from `environment/`), with raw terminal output pasted verbatim.
 
-### Proof A (Empty Solution)
+### Proof A (Empty Solution) — expect reward 0
 
-The empty-environment proof collected seven tests. Four tests failed because the publisher and runtime DuckDB state were absent, while the input-integrity, gateway-integrity and revoked-key tests passed.
+Command:
 
-Reward output:
+```
+docker run --rm -it `
+  -v "${PWD}\tests:/tests:ro" `
+  task-img `
+  bash -lc "bash /tests/test.sh; cat /logs/verifier/reward.txt"
+```
+
+Output:
 
 ```text
+=============================================================== test session starts ================================================================
+platform linux -- Python 3.11.2, pytest-8.4.1, pluggy-1.6.0
+cachedir: /tmp/.pytest_cache
+rootdir: /tests
+plugins: json-ctrf-0.3.5
+collected 7 items
+
+../tests/test_outputs.py ..FFFF.                                                                                                             [100%]
+
+===================================================================== FAILURES =====================================================================
+_______________________________________________________ test_publisher_output_matches_golden _______________________________________________________
+AssertionError: release-publisher.mjs is missing
+_______________________________________________________ test_duckdb_persistence_and_receipts _______________________________________________________
+AssertionError: DuckDB releases.duckdb was not created
+_____________________________________________________ test_idempotency_and_deterministic_rerun _____________________________________________________
+AssertionError: release-publisher.mjs is missing
+___________________________________________________ test_reconciliation_omits_withdrawn_bundles ____________________________________________________
+AssertionError: DuckDB releases.duckdb was not created
+
+============================================================= short test summary info ==============================================================
+PASSED ../tests/test_outputs.py::test_input_files_are_unmodified
+PASSED ../tests/test_outputs.py::test_gateway_files_are_unmodified
+PASSED ../tests/test_outputs.py::test_gateway_rejects_revoked_key_trap
+FAILED ../tests/test_outputs.py::test_publisher_output_matches_golden - AssertionError: release-publisher.mjs is missing
+FAILED ../tests/test_outputs.py::test_duckdb_persistence_and_receipts - AssertionError: DuckDB releases.duckdb was not created
+FAILED ../tests/test_outputs.py::test_idempotency_and_deterministic_rerun - AssertionError: release-publisher.mjs is missing
+FAILED ../tests/test_outputs.py::test_reconciliation_omits_withdrawn_bundles - AssertionError: DuckDB releases.duckdb was not created
+=========================================================== 4 failed, 3 passed in 2.18s ============================================================
+pytest exit code: 1
 0
 ```
 
-### Proof B (Reference Solution)
+With no solution installed, the four tests that depend on the publisher's own output all fail as expected (`/app/publisher/release-publisher.mjs` and `/app/releases.duckdb` don't exist yet), while the three tests that only check the provided environment (fixture integrity, gateway integrity, revoked-key rejection) pass on their own. Overall pytest exit code is 1, so `reward.txt` is `0`. This proves the task is genuinely unsolved out of the box.
 
-The reference solution proof collected seven tests and all seven passed. The publisher reconciled the manifest, signed with the current signing key, published through the gateway, persisted publication state and satisfied the verifier.
+### Proof B (Reference Solution) — expect reward 1
 
-Reward output:
+Command:
+
+```
+docker run --rm -it `
+  -v "${PWD}\tests:/tests:ro" `
+  -v "${PWD}\solution:/solution:ro" `
+  task-img `
+  bash -lc "bash /solution/publish.sh && bash /tests/test.sh; cat /logs/verifier/reward.txt"
+```
+
+Output:
 
 ```text
+BUNDLE BND-101 SIGNED KEY=fw-signing-2026-current
+BUNDLE BND-101 PUBLISHED RECEIPT=pub_2ddbc99a7d61de760ba53efa TOKEN=token-BND-101 STATUS=PUBLISHED
+BUNDLE BND-102 SIGNED KEY=fw-signing-2026-current
+BUNDLE BND-102 PUBLISHED RECEIPT=pub_b5b7505be5fdb0a83e0cf2fe TOKEN=token-BND-102 STATUS=PUBLISHED
+BUNDLE BND-103 SIGNED KEY=fw-signing-2026-current
+BUNDLE BND-103 PUBLISHED RECEIPT=pub_404c37f532f423478ce20ce7 TOKEN=token-BND-103 STATUS=PUBLISHED
+=============================================================== test session starts ================================================================
+platform linux -- Python 3.11.2, pytest-8.4.1, pluggy-1.6.0
+cachedir: /tmp/.pytest_cache
+rootdir: /tests
+plugins: json-ctrf-0.3.5
+collected 7 items
+
+../tests/test_outputs.py .......                                                                                                             [100%]
+
+============================================================= short test summary info ==============================================================
+PASSED ../tests/test_outputs.py::test_input_files_are_unmodified
+PASSED ../tests/test_outputs.py::test_gateway_files_are_unmodified
+PASSED ../tests/test_outputs.py::test_publisher_output_matches_golden
+PASSED ../tests/test_outputs.py::test_duckdb_persistence_and_receipts
+PASSED ../tests/test_outputs.py::test_idempotency_and_deterministic_rerun
+PASSED ../tests/test_outputs.py::test_reconciliation_omits_withdrawn_bundles
+PASSED ../tests/test_outputs.py::test_gateway_rejects_revoked_key_trap
+================================================================ 7 passed in 2.74s =================================================================
+pytest exit code: 0
 1
 ```
+
+`solution/publish.sh` installed `release-publisher.mjs` into `/app/publisher/`, started the gateway and ran the publisher, which reconciled the manifest, signed each publishable bundle (`BND-101`, `BND-102`, `BND-103`) with the current key, published them and persisted the receipts to DuckDB. All seven tests pass and `reward.txt` is `1`. This proves the task is solvable and the grader is correct.
